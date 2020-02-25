@@ -17,13 +17,16 @@ from PIL import Image, ImageOps
 ## Utility functions
 
 NON_VALID_LATEX = set()
-UPLOADED_LATEX = {} 
+EXPOSE_URL = open("expose_url.txt").read().strip()
 
 def present_user(user):
 	return "{} (@{})".format(" ".join(
 		[name for name in [user.first_name, user.last_name] if name]),
 		user.username
 	)
+
+def filename2url(filename):
+	return EXPOSE_URL + filename
 
 # Original code and licence for theses 2 functions at : https://gist.github.com/Cilyan/9424144 (Written by : @Cilyan)
 
@@ -109,9 +112,9 @@ def send_equation(chat_id, text):
 	if not filename:
 		return False
 
+	bot.send_message(chat_id, filename2url(filename))
 	with open(filename, 'rb') as equation:
-		f = bot.send_photo(chat_id, equation)
-		print(f)
+		bot.send_photo(chat_id, equation)
 	return True
 
 @bot.message_handler(commands=['start', 'help'])
@@ -129,6 +132,44 @@ def send_expression(message):
 			new_msg = bot.reply_to(message, "Invalid latex expression")
 	else:
 		new_msg = bot.reply_to(message, "Please send your expression with \"/latex [expression]\"")
+
+## Inline mode
+
+def get_inline_query_results(inline_query):
+	image_path = latex2img(inline_query.query)
+	if image_path:
+		return [
+			telebot.types.InlineQueryResultArticle(
+				id=0,
+				title="Convert LaTeX to image",
+				input_message_content=telebot.types.InputTextMessageContent(
+					filename2url(image_path)
+				),
+				description="Press to send the image url",
+				thumb_height=1
+			)
+		]
+	return [
+		telebot.types.InlineQueryResultArticle(
+			id=0,
+			title="Convert LaTeX to image",
+			input_message_content=telebot.types.InputTextMessageContent(
+				"This should be the image",
+				parse_mode='HTML'
+			),
+			description="invalid LaTeX code",
+			thumb_height=1
+		)
+	]
+
+@bot.inline_handler(func=lambda query: True)
+def query_text(inline_query):
+	bot.answer_inline_query(
+		inline_query.id,
+		get_inline_query_results(inline_query)
+	)
+
+## Init bot
 
 logger = telebot.logger
 formatter = logging.Formatter('[%(asctime)s] %(thread)d {%(pathname)s:%(lineno)d} %(levelname)s - %(message)s',
