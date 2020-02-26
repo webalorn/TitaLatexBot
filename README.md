@@ -50,7 +50,7 @@ For some functionalities to work, you need an http access to the downloaded imag
 
 ## Example
 
-![Examples from the original dev mobile](example.png)
+![Examples, from deskop app](example.png)
 
 Enjoy it!
 

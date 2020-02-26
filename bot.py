@@ -34,6 +34,7 @@ last_images = defaultdict(deque)
 last_images_lock = Lock()
 
 old_data_json = ""
+data_files_lock = Lock()
 
 MAX_SAVED_USER = 5
 LOST = set(["the game", "THE GAME", "game", "42"])
@@ -69,20 +70,21 @@ def filename2url(filename):
 
 def save_data():
 	global old_data_json
-	with non_valid_latex_lock, last_images_lock:
-		data_dict = {
-			"last_images" : {key:list(val) for key, val in last_images.items()},
-			"non_valid_latex" : list(non_valid_latex),
-		}
-	json_val = json.dumps(data_dict)
+	with data_files_lock:
+		with non_valid_latex_lock, last_images_lock:
+			data_dict = {
+				"last_images" : {key:list(val) for key, val in last_images.items()},
+				"non_valid_latex" : list(non_valid_latex),
+			}
+		json_val = json.dumps(data_dict)
 
-	if json_val != old_data_json:
-		old_data_json = json_val
-		with open("data_tmp.json", "w") as f:
-			f.write(json_val)
-			f.flush()
-			os.fsync(f.fileno())
-		os.rename("data_tmp.json", "data.json") # Atomic operation, ensures the data is not corrupted if the darmon thread is closed.
+		if json_val != old_data_json:
+			old_data_json = json_val
+			with open("data_tmp.json", "w") as f:
+				f.write(json_val)
+				f.flush()
+				os.fsync(f.fileno())
+			os.rename("data_tmp.json", "data.json") # Atomic operation, ensures the data is not corrupted if the darmon thread is closed.
 
 def load_data():
 	global non_valid_latex, last_images
@@ -312,6 +314,24 @@ logger.addHandler(ch)
 logger.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 
-print("Hello ! I am {}".format(present_user(bot_user_infos) or ""))
-back_thread.start()
-bot.polling()
+def main():
+	print("Hello ! I am {}".format(present_user(bot_user_infos) or ""))
+	back_thread.start()
+
+	while True:
+		try:
+			bot.polling(none_stop=True)
+		except KeyboardInterrupt as e:
+			print("KeyboardInterrupt", e)
+			raise e
+		except Exception as ex:
+			print("ERROR", ex)
+			logger.error(ex)
+		else:
+			break
+		finally:
+			save_data()
+		time.sleep(5)
+
+if __name__ == '__main__':
+	main()
