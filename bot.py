@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from threading import current_thread
+from collections import defaultdict, deque
 import os, sys
 import base64
 import struct
@@ -17,7 +18,15 @@ from PIL import Image, ImageOps
 ## Utility functions
 
 NON_VALID_LATEX = set()
-EXPOSE_URL = open("expose_url.txt").read().strip()
+LAST_IMAGES = defaultdict(deque, {'webalorn': deque([('4', 'AgACAgQAAxkDAANYXlYkvhUH810L16zmbHQ3t5HLGVYAAhmxMRtUQLFSCsGyfZfpP1lIX6gbAAQBAAMCAANtAANWbwgAARgE'), ('5', 'AgACAgQAAxkDAANaXlYkxXYmks1CS42IkGjMbnwsEKMAAoCxMRveYbhSTV_Wh-kJmGzPkaAbAAQBAAMCAANtAAPR9AcAARgE')])})
+MAX_SAVED_USER = 10
+
+try:
+	EXPOSE_URL = open("expose_url.txt").read().strip()
+	print("Inline mode : recent item and new expressions generation")
+except FileNotFoundError:
+	EXPOSE_URL = None
+	print("Inline mode : only recent items")
 
 def present_user(user):
 	return "{} (@{})".format(" ".join(
@@ -47,6 +56,11 @@ def hash_dn(dn, salt="42"):
 	# Pack hash (int) into bytes
 	bhash = struct.pack("<Q", hash_)
 	return base64.urlsafe_b64encode(bhash)[:-1].decode("ascii")
+
+def mark_user_image(username, expression, photo_id):
+	LAST_IMAGES[username].append((expression, photo_id))
+	while len(LAST_IMAGES[username]) > MAX_SAVED_USER:
+		LAST_IMAGES[username].popleft()
 
 ## Latex conversion
 
@@ -103,23 +117,22 @@ bot_user_infos = bot.get_me()
 
 ## Bot functions
 
-def send_equation(chat_id, text):
+def send_equation(chat_id, text, user):
 	bot.send_chat_action(chat_id, 'upload_document')
-
-	# filename = 'results/latex' + current_thread().name + ".webp"
 
 	filename = latex2img(text)
 	if not filename:
 		return False
 
-	bot.send_message(chat_id, filename2url(filename))
 	with open(filename, 'rb') as equation:
-		bot.send_photo(chat_id, equation)
+		msg = bot.send_photo(chat_id, equation)
+		mark_user_image(user.username, text.strip(), msg.photo[0].file_id)
 	return True
 
 @bot.message_handler(commands=['start', 'help'])
 def send_welcome(message):
-	bot.reply_to(message, "You can convert LaTeX expression using\n\n/latex expression")
+	if message.text != "latex":
+		bot.reply_to(message, "You can convert LaTeX expression using\n\n/latex expression")
 
 @bot.message_handler(commands=['latex'])
 def send_expression(message):
@@ -128,14 +141,14 @@ def send_expression(message):
 	text = message.text[7:]
 
 	if text and text != "LaTeX2IMGbot":
-		if not send_equation(chat_id, text):
+		if not send_equation(chat_id, text, message.from_user):
 			new_msg = bot.reply_to(message, "Invalid latex expression")
 	else:
 		new_msg = bot.reply_to(message, "Please send your expression with \"/latex [expression]\"")
 
 ## Inline mode
 
-def get_inline_query_results(inline_query):
+def get_inline_query_results_generated(inline_query):
 	image_path = latex2img(inline_query.query)
 	if image_path:
 		return [
@@ -143,7 +156,8 @@ def get_inline_query_results(inline_query):
 				id=0,
 				title="Convert LaTeX to image",
 				input_message_content=telebot.types.InputTextMessageContent(
-					filename2url(image_path)
+					filename2url(image_path),
+					parse_mode='HTML'
 				),
 				description="Press to send the image url",
 				thumb_height=1
@@ -154,20 +168,43 @@ def get_inline_query_results(inline_query):
 			id=0,
 			title="Convert LaTeX to image",
 			input_message_content=telebot.types.InputTextMessageContent(
-				"This should be the image",
-				parse_mode='HTML'
+				"The latex code \"{}\" is invalid".format(inline_query.query)
 			),
 			description="invalid LaTeX code",
 			thumb_height=1
 		)
 	]
 
+def get_inline_query_results_lasts(inline_query):
+	results = []
+	for latex_expr, photo_id in LAST_IMAGES[inline_query.from_user.username]:
+		results.append(
+			telebot.types.InlineQueryResultCachedPhoto(
+				id=len(results)+10,
+				title=latex_expr,
+				photo_file_id=photo_id,
+				description="Use previous expression :",
+				caption=latex_expr
+			)
+		)
+	return results
+
 @bot.inline_handler(func=lambda query: True)
 def query_text(inline_query):
-	bot.answer_inline_query(
-		inline_query.id,
-		get_inline_query_results(inline_query)
-	)
+	if inline_query.query.strip() and EXPOSE_URL:
+		bot.answer_inline_query(
+			inline_query.id,
+			get_inline_query_results_generated(inline_query),
+		)
+	else:
+		bot.answer_inline_query(
+			inline_query.id,
+			get_inline_query_results_lasts(inline_query),
+			cache_time=0,
+			is_personal=True,
+			switch_pm_text="Write an equation with me",
+			switch_pm_parameter="latex",
+		)
 
 ## Init bot
 
