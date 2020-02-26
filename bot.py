@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-from threading import current_thread
+from threading import current_thread, Lock
 from collections import defaultdict, deque
 import os, sys
 import base64
@@ -15,14 +15,31 @@ from urllib.request import urlopen
 import PIL
 from PIL import Image, ImageOps
 
+## Messages
+
+MESSAGES = {
+	"start" : "Hello ! I am Tita-Latex, I am here to help you using latex in telegram. To start, directly type your latex code, or use :\n\n/latex [you code]\n\n Enjoy !",
+	"latex_start" : "Now, write your equation 😈",
+	"switch_pm_text" : "Write an equation with me 😇",
+	"no_latex_in_cmd" : "It would be nice to send your latex expression with \"/latex [expression]\", or by sending the code directly in the conversation",
+	"invalid_latex_code" : "Ho no, my dear friend... Your latex code \"{}\" is invalid !",
+	"help" : "While you can directly talk to me in latex, you can also use :\n\n/latex [expression]"
+}
+
 ## Utility functions
 
-NON_VALID_LATEX = set()
-LAST_IMAGES = defaultdict(deque, {'webalorn': deque([('4', 'AgACAgQAAxkDAANYXlYkvhUH810L16zmbHQ3t5HLGVYAAhmxMRtUQLFSCsGyfZfpP1lIX6gbAAQBAAMCAANtAANWbwgAARgE'), ('5', 'AgACAgQAAxkDAANaXlYkxXYmks1CS42IkGjMbnwsEKMAAoCxMRveYbhSTV_Wh-kJmGzPkaAbAAQBAAMCAANtAAPR9AcAARgE')])})
-MAX_SAVED_USER = 10
+non_valid_latex = set()
+non_valid_latex_lock = Lock()
+
+last_images = defaultdict(deque)
+last_images_lock = Lock()
+MAX_SAVED_USER = 5
+LOST = set(["the game", "THE GAME", "game", "42"])
 
 try:
 	EXPOSE_URL = open("expose_url.txt").read().strip()
+	if EXPOSE_URL[-1] != "/":
+		EXPOSE_URL = EXPOSE_URL + "/"
 	print("Inline mode : recent item and new expressions generation")
 except FileNotFoundError:
 	EXPOSE_URL = None
@@ -58,9 +75,10 @@ def hash_dn(dn, salt="42"):
 	return base64.urlsafe_b64encode(bhash)[:-1].decode("ascii")
 
 def mark_user_image(username, expression, photo_id):
-	LAST_IMAGES[username].append((expression, photo_id))
-	while len(LAST_IMAGES[username]) > MAX_SAVED_USER:
-		LAST_IMAGES[username].popleft()
+	with last_images_lock:
+		last_images[username].append((expression, photo_id))
+		while len(last_images[username]) > MAX_SAVED_USER:
+			last_images[username].popleft()
 
 ## Latex conversion
 
@@ -75,8 +93,10 @@ def latex2img(expression):
 
 	if os.path.exists(filename):
 		return filename
-	elif expr_encoded in NON_VALID_LATEX:
-		return None
+	else:
+		with non_valid_latex_lock:
+			if expr_encoded in non_valid_latex:
+				return None
 
 	# Preparing text strings
 	server = "http://latex.codecogs.com/png.download?"
@@ -96,7 +116,8 @@ def latex2img(expression):
 		image = Image.open(fullname_png).convert("RGBA")
 		image = ImageOps.expand(image, 75)
 	except PIL.UnidentifiedImageError: # In case of invalid expression
-		NON_VALID_LATEX.add(expression)
+		with non_valid_latex_lock:
+			non_valid_latex.add(expression)
 		return None
 
 	canvas = Image.new('RGBA', image.size, (255,255,255,255))
@@ -125,26 +146,45 @@ def send_equation(chat_id, text, user):
 		return False
 
 	with open(filename, 'rb') as equation:
-		msg = bot.send_photo(chat_id, equation)
+		markup = types.InlineKeyboardMarkup(row_width=2)
+		markup.row(
+			types.InlineKeyboardButton("Image", url=filename2url(filename)),
+			types.InlineKeyboardButton("Send", switch_inline_query="")
+		)
+		msg = bot.send_photo(chat_id, equation, reply_markup=markup)
 		mark_user_image(user.username, text.strip(), msg.photo[0].file_id)
 	return True
 
-@bot.message_handler(commands=['start', 'help'])
+def handle_expression(text, message):
+	if text and text[0] != "/":
+		if not send_equation(message.chat.id, text, message.from_user):
+			new_msg = bot.reply_to(message, "Invalid latex expression")
+	else:
+		new_msg = bot.reply_to(message, MESSAGES["no_latex_in_cmd"])
+
+@bot.message_handler(commands=['start'])
 def send_welcome(message):
-	if message.text != "latex":
-		bot.reply_to(message, "You can convert LaTeX expression using\n\n/latex expression")
+	if message.text == "/start latex":
+		bot.send_message(message.chat.id, MESSAGES["latex_start"])
+	else:
+		bot.send_message(message.chat.id, MESSAGES["start"])
+
+@bot.message_handler(commands=['help'])
+def send_help(message):
+	bot.send_message(message.chat.id, MESSAGES["help"])
 
 @bot.message_handler(commands=['latex'])
 def send_expression(message):
 	print("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
-	chat_id = message.chat.id
-	text = message.text[7:]
+	handle_expression(message.text[7:], message)
 
-	if text and text != "LaTeX2IMGbot":
-		if not send_equation(chat_id, text, message.from_user):
-			new_msg = bot.reply_to(message, "Invalid latex expression")
+@bot.message_handler()
+def text_handler(message):
+	text = message.text.strip()
+	if text in LOST:
+		bot.send_message(message.chat.id, "How dare you !!??...\nI lost the game 👿")
 	else:
-		new_msg = bot.reply_to(message, "Please send your expression with \"/latex [expression]\"")
+		handle_expression(text, message)
 
 ## Inline mode
 
@@ -159,7 +199,7 @@ def get_inline_query_results_generated(inline_query):
 					filename2url(image_path),
 					parse_mode='HTML'
 				),
-				description="Press to send the image url",
+				description="Press to send the latex image",
 				thumb_height=1
 			)
 		]
@@ -168,7 +208,7 @@ def get_inline_query_results_generated(inline_query):
 			id=0,
 			title="Convert LaTeX to image",
 			input_message_content=telebot.types.InputTextMessageContent(
-				"The latex code \"{}\" is invalid".format(inline_query.query)
+				MESSAGES["invalid_latex_code"].format(inline_query.query)
 			),
 			description="invalid LaTeX code",
 			thumb_height=1
@@ -177,16 +217,17 @@ def get_inline_query_results_generated(inline_query):
 
 def get_inline_query_results_lasts(inline_query):
 	results = []
-	for latex_expr, photo_id in LAST_IMAGES[inline_query.from_user.username]:
-		results.append(
-			telebot.types.InlineQueryResultCachedPhoto(
-				id=len(results)+10,
-				title=latex_expr,
-				photo_file_id=photo_id,
-				description="Use previous expression :",
-				caption=latex_expr
+	with last_images_lock:
+		for latex_expr, photo_id in last_images[inline_query.from_user.username]:
+			results.append(
+				telebot.types.InlineQueryResultCachedPhoto(
+					id=len(results)+10,
+					title=latex_expr,
+					photo_file_id=photo_id,
+					description="Use previous expression :",
+					caption=latex_expr
+				)
 			)
-		)
 	return results
 
 @bot.inline_handler(func=lambda query: True)
@@ -202,7 +243,7 @@ def query_text(inline_query):
 			get_inline_query_results_lasts(inline_query),
 			cache_time=0,
 			is_personal=True,
-			switch_pm_text="Write an equation with me",
+			switch_pm_text=MESSAGES["switch_pm_text"],
 			switch_pm_parameter="latex",
 		)
 
