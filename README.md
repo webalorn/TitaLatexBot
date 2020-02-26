@@ -1,5 +1,5 @@
 # TitaLatexBot
-Telegram Bot that receive an LaTeX equation and send it back as a sticker.
+Telegram Bot that receive an LaTeX equation and send it back as an image. You can make your own instance of the bot, and add your owns changes, or use the version I host myself : [TitaLatexBot](https://t.me/titalatexbot).
 
 This is developed with [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI) using the listener mechanism. This fork has been modified for my own usage, because I could not find a latex bot still working.
 
@@ -53,3 +53,11 @@ For some functionalities to work, you need an http access to the downloaded imag
 ![Examples from the original dev mobile](example.png)
 
 Enjoy it!
+
+## About
+
+Current developer : Théophane Vallaeys ([webalorn](https://github.com/webalorn))
+
+I made this bot from [LaTeX2IMGbot](https://github.com/analca3/LaTeX2IMGbot) by [analca3](https://github.com/analca3). But since there were bugs and many limitations, I made created TitaLatex.
+
+(And Tita is just the name I give to all my bots)

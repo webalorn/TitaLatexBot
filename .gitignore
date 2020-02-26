@@ -1,5 +1,6 @@
 token.txt
 expose_url.txt
 nohup.out
-log.txt
+*.log
+*.json
 results/*
