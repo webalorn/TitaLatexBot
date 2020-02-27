@@ -5,27 +5,10 @@ This is developed with [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegra
 
 ## Required packages
 
-You need to install previously **libwebp**, **Pillow** and **pyTelegramBotAPI**. It's very important you get libwebp **BEFORE** pillow (or you can re-install pillow after installing libwebp). You can get them using your package manager.
+You need to install previously **Pillow**, **unidecode** and **pyTelegramBotAPI**. You can install them with pip.
 
-In Archlinux
 ```
-pacman -S libwebp python-pillow
-```
-
-In Debian-based distros
-```
-apt-get install libwebp2 libwebp-dev
-```
-
-On MacOs
-```
-brew install webp
-```
-
-Using pip
-```
-python3 -m pip install --upgrade Pillow
-python3 -m pip install --upgrade pyTelegramBotAPI
+python3 -m pip install --upgrade pyTelegramBotAPI pillow unidecode
 ```
 
 ## Usage
@@ -58,6 +41,6 @@ Enjoy it!
 
 Current developer : Théophane Vallaeys ([webalorn](https://github.com/webalorn))
 
-I made this bot from [LaTeX2IMGbot](https://github.com/analca3/LaTeX2IMGbot) by [analca3](https://github.com/analca3). But since there were bugs and many limitations, I made created TitaLatex.
+I made this bot from [LaTeX2IMGbot](https://github.com/analca3/LaTeX2IMGbot) by [analca3](https://github.com/analca3). Since there were bugs and many limitations, I created TitaLatex. Most of the code has been rewriten. Most of the code is new.
 
 (And Tita is just the name I give to all my bots)

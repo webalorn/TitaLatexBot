@@ -9,10 +9,7 @@ import telebot
 from telebot import logging
 from telebot import types
 
-from urllib.parse import quote
-from urllib.request import urlopen
-import PIL
-from PIL import Image, ImageOps
+from latex2img import *
 
 ## Messages
 
@@ -122,8 +119,15 @@ def fnv64(data):
 	return hash_
 
 def hash_dn(dn, salt="42"):
-	# Turn dn into bytes with a salt, dn is expected to be ascii data
-	dn = "".join(chr(ord(c)%128) for c in dn)
+	# Turn dn into bytes with a salt
+	# dn = "".join(chr(ord(c)%128) for c in dn)
+	tab = [[ord(c)] for c in dn]
+	for l in tab:
+		while l[-1] >= 128:
+			l.append(l[-1]//128)
+			l[-2] = l[-1] % 128
+	dn = "".join(["".join([chr(c) for c in l]) for l in tab])
+
 	data = salt.encode("ascii") + dn.encode("ascii")
 	# Hash data
 	hash_ = fnv64(data)
@@ -139,58 +143,40 @@ def mark_user_image(username, expression, photo_id):
 
 ## Latex conversion
 
-def latex2img(expression):
+def tex2filename(expression):
 	"""
-	Convert expression to an image called filename.webp
+	Convert expression to an image called results/hash.png
 	"""
 	expression = expression.strip()
 	expr_encoded = hash_dn(expression)
-	filename = "results/" + expr_encoded + ".webp"
+	filename_result = "results/" + expr_encoded + ".png"
 	os.makedirs("results", exist_ok=True)
 
-	if os.path.exists(filename):
-		return filename
+	if os.path.exists(filename_result):
+		return filename_result
 	else:
 		with non_valid_latex_lock:
 			if expr_encoded in non_valid_latex:
 				return None
 
-	# Preparing text strings
-	server = "http://latex.codecogs.com/png.download?"
-	fullname_png = "results/" + current_thread().name + "_tmp.png"
-	size = "%5Cdpi%7B300%7D%20"
-
-	# Quote expression
-	expression = quote(expression)
-	url = server + size + expression
-
-	# Download file from url and save to output_file:
-	with urlopen(url) as response, open(fullname_png, 'wb') as output_file:
-		data = response.read()  # A bytes object
-		output_file.write(data)
+	filename_tmp = "results/" + current_thread().name + "_tmp"
 
 	try:
-		image = Image.open(fullname_png).convert("RGBA")
-		image = ImageOps.expand(image, 75)
-	except PIL.UnidentifiedImageError: # In case of invalid expression
+		tmp_location = tex2png_codegogs(filename_tmp, expression)
+	except InvalidLatexErr:
 		with non_valid_latex_lock:
 			non_valid_latex.add(expression)
 		return None
 
-	canvas = Image.new('RGBA', image.size, (255,255,255,255))
-	canvas.paste(image, mask=image)
-	canvas.save(filename, format="WEBP")
-
-	os.remove(fullname_png)
-
-	return filename
+	os.rename(tmp_location, filename_result)
+	return filename_result
 
 ## Bot functions
 
 def send_equation(chat_id, text, user):
 	bot.send_chat_action(chat_id, 'upload_document')
 
-	filename = latex2img(text)
+	filename = tex2filename(text)
 	if not filename:
 		return False
 
@@ -242,7 +228,7 @@ def text_handler(message):
 ## Inline mode
 
 def get_inline_query_results_generated(inline_query):
-	image_path = latex2img(inline_query.query)
+	image_path = tex2filename(inline_query.query)
 	if image_path:
 		return [
 			telebot.types.InlineQueryResultArticle(

@@ -1,6 +1,7 @@
 token.txt
 expose_url.txt
 nohup.out
+*.pyc
 *.log
 *.json
 results/*
