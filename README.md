@@ -15,11 +15,23 @@ python3 -m pip install --upgrade pyTelegramBotAPI pillow unidecode
 
 1. Create a bot with the [BotFather](https://t.me/botfather) Telegram Bot
 	- To enable inline mode, use ```/setinline ```
-2. Write the token in token.txt file
+2. Write configuration in ```conf.json``` (see below)
 3. Execute the bot in your server with ```./bot.py```
 4. In the Telegram client you can talk with your bot or add them to groups. All messages beggining with **/latex** will be catched by the bot. You can also use the inline mode with @nameofthebot.
 
 For some functionalities to work, you need an http access to the downloaded images (the "results" folder). Write the url of the server in expose_url.txt. The images must be accessible at your_exposed_url/results/image_filename.
+
+### Configuration
+
+You must write your configuration in ```conf.json``` in the following format. ```expose_url``` is optional and can be leaved empty, or removed.
+
+```json
+{
+	"token" : "your_bot_access_token",
+	"expose_url" : "http://you_domain/subdirs/",
+	"nb_recent_items" : 5
+}
+```
 
 ### Usage of the bot
 

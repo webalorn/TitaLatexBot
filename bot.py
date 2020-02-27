@@ -10,6 +10,7 @@ from telebot import logging
 from telebot import types
 
 from latex2img import *
+from data import CONF
 
 ## Messages
 
@@ -33,25 +34,11 @@ last_images_lock = Lock()
 old_data_json = ""
 data_files_lock = Lock()
 
-MAX_SAVED_USER = 5
 LOST = set(["the game", "THE GAME", "game", "42"])
-
-
-with open("token.txt", "r") as file:
-	TOKEN = file.readline().strip()
-
-try:
-	EXPOSE_URL = open("expose_url.txt").read().strip()
-	if EXPOSE_URL[-1] != "/":
-		EXPOSE_URL = EXPOSE_URL + "/"
-	print("Inline mode : recent item and new expressions generation")
-except FileNotFoundError:
-	EXPOSE_URL = None
-	print("Inline mode : only recent items")
 
 ## Bot creation
 
-bot = telebot.TeleBot(TOKEN)
+bot = telebot.TeleBot(CONF.token)
 bot_user_infos = bot.get_me()
 
 ## Utility functions
@@ -63,7 +50,7 @@ def present_user(user):
 	)
 
 def filename2url(filename):
-	return EXPOSE_URL + filename
+	return CONF.expose_url + filename
 
 def save_data():
 	global old_data_json
@@ -138,7 +125,7 @@ def hash_dn(dn, salt="42"):
 def mark_user_image(username, expression, photo_id):
 	with last_images_lock:
 		last_images[username].append((expression, photo_id))
-		while len(last_images[username]) > MAX_SAVED_USER:
+		while len(last_images[username]) > CONF.nb_recent_items:
 			last_images[username].popleft()
 
 ## Latex conversion
@@ -301,6 +288,7 @@ logger.setLevel(logging.INFO)
 ch.setFormatter(formatter)
 
 def main():
+	CONF.to_stdout()
 	print("Hello ! I am {}".format(present_user(bot_user_infos) or ""))
 	back_thread.start()
 
