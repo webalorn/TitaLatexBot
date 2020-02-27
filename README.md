@@ -57,7 +57,8 @@ You must write your configuration in ```conf.json``` in the following format. ``
 	"use_local_latex" : true,
 	"expose_url" : "http://you_domain/subdirs/",
 	"nb_recent_items" : 5,
-	"latex_dpi" : 350
+	"latex_dpi" : 350,
+	"image_border" : 40
 }
 ```
 
@@ -65,7 +66,8 @@ You must write your configuration in ```conf.json``` in the following format. ``
 - use_local_latex : **[required]** ```true``` if you want to compile latex using your server latex distribution, ```false``` if you want to use the remote API.
 - expose_url : *[optional]* Url to access the generated images.
 - nb_recent_items : *[optional]* Number of recent latex images shown by the bot in inline mode.
-- latex_dpi : *[optional]* Affect the quality of the latex images.
+- latex_dpi : *[optional]* Affects the quality of the latex images.
+- image_border : *[optional]*
 
 ### Usage of the bot
 
@@ -79,7 +81,7 @@ You must write your configuration in ```conf.json``` in the following format. ``
 
 ## Example
 
-![Examples, from deskop app](example.png)
+![Examples, from deskop app](ressources/example.png)
 
 Enjoy it!
 
