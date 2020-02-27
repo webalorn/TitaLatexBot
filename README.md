@@ -5,10 +5,36 @@ This is developed with [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegra
 
 ## Required packages
 
-You need to install previously **Pillow**, **unidecode** and **pyTelegramBotAPI**. You can install them with pip.
+You need to install previously **Pillow**, and **pyTelegramBotAPI**. You can install them with pip.
 
+```bash
+python3 -m pip install --upgrade pyTelegramBotAPI pillow
 ```
-python3 -m pip install --upgrade pyTelegramBotAPI pillow unidecode
+
+The bot can render latex locally, or by using a remote API (but the API have more limitations). In both case, you will need to specify the option you choosed in ```conf.json```.
+
+### Compiling locally
+
+In the first case, you need to install a latex distribution, the package ```dvipng```, and the python package ```unidecode```. On debian-based distros, you can use :
+
+```bash
+apt-get install dvipng texlive texlive-latex-extra texlive-science
+```
+
+You can check if the latex installation is working correctly for the bot with :
+```bash
+latex -src -interaction=nonstopmode template.tex
+dvipng -T tight -D 600 template.dvi -o template.png
+```
+
+If you have an image named ```template.png``` displaying ```<template>```, it should be ok.
+
+### Using the remote API
+
+With the remote API, you will juste need the python package ```unidecode```, because the API doesn't works with accents.
+
+```bash
+python3 -m pip install --upgrade unidecode
 ```
 
 ## Usage
@@ -23,15 +49,23 @@ For some functionalities to work, you need an http access to the downloaded imag
 
 ### Configuration
 
-You must write your configuration in ```conf.json``` in the following format. ```expose_url``` is optional and can be leaved empty, or removed.
+You must write your configuration in ```conf.json``` in the following format. ```expose_url``` is optional and can be leaved empty, or removed. Theses are the settings I use, except, of course, for ```token``` and ```expose_url```.
 
 ```json
 {
 	"token" : "your_bot_access_token",
+	"use_local_latex" : true,
 	"expose_url" : "http://you_domain/subdirs/",
-	"nb_recent_items" : 5
+	"nb_recent_items" : 5,
+	"latex_dpi" : 350
 }
 ```
+
+- token : **[required]**
+- use_local_latex : **[required]** ```true``` if you want to compile latex using your server latex distribution, ```false``` if you want to use the remote API.
+- expose_url : *[optional]* Url to access the generated images.
+- nb_recent_items : *[optional]* Number of recent latex images shown by the bot in inline mode.
+- latex_dpi : *[optional]* Affect the quality of the latex images.
 
 ### Usage of the bot
 

@@ -149,7 +149,7 @@ def tex2filename(expression):
 	filename_tmp = "results/" + current_thread().name + "_tmp"
 
 	try:
-		tmp_location = tex2png_codegogs(filename_tmp, expression)
+		tmp_location = tex2png(filename_tmp, expression)
 	except InvalidLatexErr:
 		with non_valid_latex_lock:
 			non_valid_latex.add(expression)
