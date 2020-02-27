@@ -1,0 +1,40 @@
+\documentclass{standalone}
+\usepackage[utf8]{inputenc}
+\usepackage[margin=0.5in]{geometry}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codecomment}{rgb}{0.4,0.4,0.4}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codetext}{rgb}{0.08,0.08,0.08}
+\definecolor{codekeywords}{rgb}{0.05,0.422,0.65}
+
+\lstdefinestyle{mystyle}{
+%    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codecomment},
+    keywordstyle=\color{codekeywords},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize\color{codetext},
+    breakatwhitespace=false,   
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=4
+}
+
+\lstset{style=mystyle}
+
+\begin{document}
+
+\begin{lstlisting}[language=<lang>]
+<latex_code>
+\end{lstlisting}
+\end{document}

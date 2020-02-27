@@ -14,7 +14,9 @@ MESSAGES = {
 	"switch_pm_text" : "Write an equation with me 😇",
 	"no_latex_in_cmd" : "It would be nice to send your latex expression with \"/latex [expression]\", or by sending the code directly in the conversation",
 	"invalid_latex_code" : "Ho no, my dear friend... Your latex code \"{}\" is invalid !",
-	"help" : "While you can directly talk to me in latex, you can also use :\n/latex [expression]\nYou can use me as a good servant in any conversion by typing @{}. You can then select one of latest images you have generated, or directly type you code."
+	"help" : "While you can directly talk to me in latex, you can also use :\n/latex [expression]\nYou can use me as a good servant in any conversion by typing @{}. You can then select one of latest images you have generated, or directly type you code.",
+	"code_cmd_explanation" : "To use this command, you must send exaclty one or two parameters :\n-> The first must be the id of a document on pastebin.com (8 characters).\n-> The second, optional, is the language of the code, or 'text' if this is plain text.",
+	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error)\nYou can check all the supported languages at : https://www.overleaf.com/learn/latex/Code_listing#Supported_languages",
 }
 
 ## Bot configuration

@@ -1,7 +1,7 @@
 import telebot
 from telebot import logging, types
 import os, sys, json
-from src.latex2img import tex2filename, InvalidLatexErr
+from src.latex2img import *
 from src.data import *
 from src.utility import *
 
@@ -9,7 +9,7 @@ from src.utility import *
 
 bot = telebot.TeleBot(CONF.token)
 
-## Bot functions
+## Bot functions for math latex
 
 def send_equation(chat_id, text, user):
 	bot.send_chat_action(chat_id, 'upload_document')
@@ -49,19 +49,32 @@ def send_help(message):
 
 @bot.message_handler(commands=['latex'])
 def send_expression(message):
-	print("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
+	log_message(message)
 	text = message.text.strip().split(" ", 1)
 	text = text[1] if len(text) >= 2 else ""
 	handle_expression(text, message)
 
-@bot.message_handler(func=lambda message:message.chat.type == "private")
-def text_handler(message):
-	print("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
-	text = message.text.strip()
-	if text in LOST:
-		bot.send_message(message.chat.id, "How dare you !!??...\nI lost the game 👿")
+@bot.message_handler(commands=['code'])
+def send_code(message):
+	log_message(message)
+	params = message.text.split()
+	if len(params) != 2 and len(params) != 3:
+		bot.send_message(message.chat.id, MESSAGES["code_cmd_explanation"])
+	paste_id = params[1][-8:]
+	lang = "" if len(params) == 2 else params[2]
+	url = "http://pastebin.com/raw/{}".format(paste_id)
+
+	filename = None
+	try:
+		filename = code2filename(url, lang)
+	except InvalidRessouce:
+		bot.send_message(message.chat.id, "This pastebin code/id is not valid 😡")
+
+	if filename:
+		with open(filename, 'rb') as img:
+			msg = bot.send_photo(message.chat.id, img, caption=url)
 	else:
-		handle_expression(text, message)
+		bot.send_message(message.chat.id, MESSAGES["code_error"])
 
 ## Inline mode
 
@@ -124,6 +137,17 @@ def query_text(inline_query):
 			switch_pm_text=MESSAGES["switch_pm_text"],
 			switch_pm_parameter="latex",
 		)
+
+## Unhandled input
+
+@bot.message_handler(func=lambda message:message.chat.type == "private")
+def text_handler(message):
+	log_message(message)
+	text = message.text.strip()
+	if text in LOST:
+		bot.send_message(message.chat.id, "How dare you !!??...\nI lost the game 👿")
+	else:
+		handle_expression(text, message)
 
 ## Init bot
 

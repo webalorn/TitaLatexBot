@@ -1,6 +1,6 @@
 from threading import Thread
 import base64, struct, time
-from src.data import CONF
+from src.data import CONF, save_data
 
 def present_user(user):
 	return "{} (@{})".format(" ".join(
@@ -19,6 +19,9 @@ class BackgroundThread(Thread):
 		while True:
 			time.sleep(60*5)
 			save_data()
+
+def log_message(message):
+	print("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
 
 ## Hashing function
 # Original code and licence for theses 2 functions at : https://gist.github.com/Cilyan/9424144 (Written by : @Cilyan)
