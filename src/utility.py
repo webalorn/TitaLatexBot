@@ -20,8 +20,20 @@ class BackgroundThread(Thread):
 			time.sleep(60*5)
 			save_data()
 
+log_file = None
+def log(*args, sep=" ", end="\n"):
+	global log_file
+	if CONF.use_stdout:
+		print(*args, sep=sep, end=end)
+	else:
+		if not log_file:
+			log_file = open("log/stdout.log", "w")
+		message = sep.join(args) + end
+		log_file.write(message)
+		log_file.flush()
+
 def log_message(message):
-	print("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
+	log("GOT message from {} : {}".format(present_user(message.from_user), repr(message.text)))
 
 ## Hashing function
 # Original code and licence for theses 2 functions at : https://gist.github.com/Cilyan/9424144 (Written by : @Cilyan)

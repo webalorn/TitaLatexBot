@@ -44,7 +44,7 @@ def handle_expression(text, message, is_text=False):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-	print("/start with {}".format(present_user(message.from_user)))
+	log("/start with {}".format(present_user(message.from_user)))
 	start_content = " ".join(message.text.strip().split()[1:])
 	if start_content == "latex":
 		bot.send_message(message.chat.id, MESSAGES["latex_start"])
@@ -170,7 +170,7 @@ def filter_recent_items(query, results):
 @bot.inline_handler(func=lambda query: True)
 def query_text(inline_query):
 	query = inline_query.query.strip()
-	print("GOT inline query from {} : {}".format(present_user(inline_query.from_user), repr(inline_query.query)))
+	log("GOT inline query from {} : {}".format(present_user(inline_query.from_user), repr(inline_query.query)))
 
 	items = query.split(" ", 2)
 
@@ -263,20 +263,20 @@ def bot_main_loop():
 	back_thread.start()
 
 	CONF.to_stdout()
-	print("Hello ! I am {}".format(present_user(bot_user_infos) or ""))
+	log("Hello ! I am {}".format(present_user(bot_user_infos) or ""))
 
 	while True:
 		try:
 			bot.polling(none_stop=True)
 		except KeyboardInterrupt as e:
-			print("KeyboardInterrupt", e)
+			log("KeyboardInterrupt", e)
 			raise e
 		except Exception as ex:
-			print("ERROR", ex)
+			log("ERROR", ex)
 			logger.error(ex)
 		else:
 			break
 		finally:
 			save_data()
-		print("Relaunching bot in 10s...")
+		log("Relaunching bot in 10s...")
 		time.sleep(10)

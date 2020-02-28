@@ -47,18 +47,20 @@ class Config:
 		self.nb_recent_items = self.conf.get("nb_recent_items", DEFAULT_RECENTS)
 		self.dpi = self.conf.get("latex_dpi", DEFAULT_DPI)
 		self.image_border = self.conf.get("image_border", 0)
+		self.use_stdout = self.conf.get("use_stdout", True)
 
 		self.expose_url = self.conf.get("expose_url", "")
 		if self.expose_url and self.expose_url[-1] != "/":
 			self.expose_url += "/"
 
 	def to_stdout(self, hide_token=True):
+		from src.utility import log
 		if not hide_token:
-			print("Token : ", self.token)
+			log("Token : ", self.token)
 		if self.expose_url:
-			print("Inline mode : recent item and new expressions generation")
+			log("Inline mode : recent item and new expressions generation")
 		else:
-			print("Inline mode : only recent items")
+			log("Inline mode : only recent items")
 
 ## Global variables
 

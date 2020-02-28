@@ -59,7 +59,8 @@ You must write your configuration in ```conf.json``` in the following format. ``
 	"expose_url" : "http://you_domain/subdirs/",
 	"nb_recent_items" : 5,
 	"latex_dpi" : 350,
-	"image_border" : 40
+	"image_border" : 40,
+	"use_stdout" : true
 }
 ```
 
