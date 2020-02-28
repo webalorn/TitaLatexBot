@@ -16,6 +16,7 @@ class InvalidRessouce(Exception):
 LATEX_TEMPLATES_FILES = {
 	"default" : "templates/default.tex",
 	"code" : "templates/code.tex",
+	"text" : "templates/text.tex",
 }
 LATEX_TEMPLATES = {name : open(f, "r").read() for name, f in LATEX_TEMPLATES_FILES.items()}
 

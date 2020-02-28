@@ -12,10 +12,13 @@ bot_user_infos = bot.get_me()
 
 ## Bot functions for math latex
 
-def send_equation(chat_id, text, user):
+def send_equation(chat_id, text, user, is_text=False):
 	bot.send_chat_action(chat_id, 'upload_document')
 
-	filename = tex2filename(text)
+	expression = LatexExpression(text)
+	if is_text:
+		expression.template = "text"
+	filename = tex2filename(expression)
 	if not filename:
 		return False
 
@@ -32,9 +35,9 @@ def send_equation(chat_id, text, user):
 		bot.edit_message_reply_markup(chat_id=chat_id, message_id=msg.message_id, reply_markup=markup)
 	return True
 
-def handle_expression(text, message):
+def handle_expression(text, message, is_text=False):
 	if text and text[0] != "/":
-		if not send_equation(message.chat.id, text, message.from_user):
+		if not send_equation(message.chat.id, text, message.from_user, is_text=is_text):
 			bot.reply_to(message, "Invalid latex expression")
 	else:
 		bot.reply_to(message, MESSAGES["no_latex_in_cmd"])
@@ -60,12 +63,12 @@ def send_help_action(chat_id):
 def send_help(message):
 	send_help_action(message.chat.id)
 
-@bot.message_handler(commands=['latex'])
+@bot.message_handler(commands=['latex', 'text'])
 def send_expression(message):
 	log_message(message)
-	text = message.text.strip().split(" ", 1)
-	text = text[1] if len(text) >= 2 else ""
-	handle_expression(text, message)
+	text_parts = message.text.strip().split(" ", 1)
+	text = text_parts[1] if len(text_parts) >= 2 else ""
+	handle_expression(text, message, text_parts[0] == "/text")
 
 @bot.message_handler(commands=['code'])
 def send_code(message):

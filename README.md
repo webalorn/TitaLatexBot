@@ -1,5 +1,6 @@
 # TitaLatexBot
-Telegram Bot that receive an LaTeX equation and send it back as an image. You can make your own instance of the bot, and add your owns changes, or use the version I host myself : [TitaLatexBot](https://t.me/titalatexbot).
+
+TitaLatex is a telegram bot that can receive an LaTeX equation and sends it back as an image, with commands to quicly send it in any conversation on telegram. It can also transorm any pastebin in an image, to have a quick and nive previez, and it allows you to quicly send the image with the pastebin url. You can make your own instance of the bot, and add your owns changes, or use the version I host myself : [TitaLatexBot](https://t.me/titalatexbot).
 
 This is developed with [pyTelegramBotAPI](https://github.com/eternnoir/pyTelegramBotAPI) using the listener mechanism. This fork has been modified for my own usage, because I could not find a latex bot still working.
 
@@ -71,8 +72,11 @@ You must write your configuration in ```conf.json``` in the following format. ``
 
 ### Usage of the bot
 
+A more detailed help for all commands is displayed by the ```/help``` command.
+
 - Send latex code or use the ```/latex``` command to generate images when talking to the bot
 	- You can then send the image to other users
+- ```/text``` works like ```/latex```, but without starting in a math environment.
 - Use ```/code <id> <language>``` command to generate image and link to a pastebin. The "language" parameter is optional. For example, to generate image from [https://pastebin.com/dXmdL6Sh](https://pastebin.com/dXmdL6Sh), use ```/latex dXmdL6Sh```, or ```/latex dXmdL6Sh python```. See the [supported languages list](https://www.overleaf.com/learn/latex/Code_listing#Supported_languages).
 - Use the commands in group chats
 - Type ```@nameofthebot``` in any chat, and then :
@@ -82,7 +86,8 @@ You must write your configuration in ```conf.json``` in the following format. ``
 
 <!--
 help - Send help message
-latex - Convert LaTeX code to image
+latex - Convert LaTeX math code to image
+text - Convert LaTeX code to image
 code - Convert code on pastebin to an image
 -->
 

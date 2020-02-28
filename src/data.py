@@ -14,7 +14,8 @@ MESSAGES = {
 	"help" : ("So you want to learn how to use me ! ☺️🔧\n\n"
 		"I have some commands you can use in private chat or in groups :\n"
 		"❓ <b>/help </b> will show this message\n"
-		"∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. You can then forward the message, or send it in any chat by typing @{0}\n"
+		"∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. This will be executed in a <em>math</em> environment. You can then forward the message, or send it in any chat by typing @{0}\n"
+		"🔡 <b>/text [LaTeX expression]</b> Use this command to generate an image from a LaTeX code. In contrast to /latex, it will NOT be executed in a math environment. You can add math parts with $math_code$. You can then forward the message, or send it in any chat by typing @{0}\n"
 		"⌨️ <b>/code [pastebin id] [language(optional)]</b> To use this command, you must create a paste on <a href='https://pastebin.com/'>pastebin</a>. Then, you must give me the id or the url of the paste. You can specify the language as a second and optional parameter, but <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>the list is very limited.</a>\n"
 		"\n"
 		"You can also just send some text in our private conversation, and I will try to interpret it as math LaTeX. In any conversation, you can also call me using <b>inline mode</b> : start by typing <b>@{0}</b> in the message field, it will allow you to :\n"\
