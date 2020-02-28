@@ -8,6 +8,7 @@ from src.utility import *
 ## Bot creation
 
 bot = telebot.TeleBot(CONF.token)
+bot_user_infos = bot.get_me()
 
 ## Bot functions for math latex
 
@@ -19,13 +20,16 @@ def send_equation(chat_id, text, user):
 		return False
 
 	with open(filename, 'rb') as equation:
+		msg = bot.send_photo(chat_id, equation)
+		add_recent_image_user(user.username, text.strip(), msg.photo[0].file_id)
+
+		inline_query = " ".join(["send", str(msg.photo[0].file_id), text.strip()])
 		markup = types.InlineKeyboardMarkup(row_width=2)
 		markup.row(
 			types.InlineKeyboardButton("Image", url=filename2url(filename)),
-			types.InlineKeyboardButton("Send", switch_inline_query="")
+			types.InlineKeyboardButton("Send", switch_inline_query=inline_query)
 		)
-		msg = bot.send_photo(chat_id, equation, reply_markup=markup)
-		add_recent_image_user(user.username, text.strip(), msg.photo[0].file_id)
+		bot.edit_message_reply_markup(chat_id=chat_id, message_id=msg.message_id, reply_markup=markup)
 	return True
 
 def handle_expression(text, message):
@@ -38,14 +42,23 @@ def handle_expression(text, message):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
 	print("/start with {}".format(present_user(message.from_user)))
-	if message.text == "/start latex":
+	start_content = " ".join(message.text.strip().split()[1:])
+	if start_content == "latex":
 		bot.send_message(message.chat.id, MESSAGES["latex_start"])
 	else:
-		bot.send_message(message.chat.id, MESSAGES["start"])
+		markup = types.InlineKeyboardMarkup(row_width=2)
+		markup.row(
+			types.InlineKeyboardButton("Show commands list", callback_data="show_help"),
+			types.InlineKeyboardButton("I don't care", callback_data="dont_care"),
+		)
+		bot.send_message(message.chat.id, MESSAGES["start"], reply_markup=markup)
+
+def send_help_action(chat_id):
+	bot.send_message(chat_id, MESSAGES["help"].format(bot_user_infos.username), parse_mode="HTML")
 
 @bot.message_handler(commands=['help'])
 def send_help(message):
-	bot.send_message(message.chat.id, MESSAGES["help"].format(bot_user_infos.username))
+	send_help_action(message.chat.id)
 
 @bot.message_handler(commands=['latex'])
 def send_expression(message):
@@ -60,9 +73,11 @@ def send_code(message):
 	params = message.text.split()
 	if len(params) != 2 and len(params) != 3:
 		bot.send_message(message.chat.id, MESSAGES["code_cmd_explanation"])
+		return
 	paste_id = params[1][-8:]
 	lang = "" if len(params) == 2 else params[2]
 	url = "http://pastebin.com/raw/{}".format(paste_id)
+	url_paste = "http://pastebin.com/{}".format(paste_id)
 
 	filename = None
 	try:
@@ -73,8 +88,18 @@ def send_code(message):
 	if filename:
 		with open(filename, 'rb') as img:
 			msg = bot.send_photo(message.chat.id, img, caption=url)
+		with last_code_shared as last_code:
+			last_code[message.from_user.username] = (paste_id, lang, msg.photo[0].file_id)
+
+		inline_query = " ".join(["send_code", str(msg.photo[0].file_id), url_paste])
+		markup = types.InlineKeyboardMarkup(row_width=2)
+		markup.row(
+			types.InlineKeyboardButton("Image", url=filename2url(filename)),
+			types.InlineKeyboardButton("Send", switch_inline_query=inline_query)
+		)
+		bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=msg.message_id, reply_markup=markup)
 	else:
-		bot.send_message(message.chat.id, MESSAGES["code_error"])
+		bot.send_message(message.chat.id, MESSAGES["code_error"], parse_mode="HTML")
 
 ## Inline mode
 
@@ -107,23 +132,73 @@ def get_inline_query_results_generated(inline_query):
 
 def get_inline_query_results_lasts(inline_query):
 	results = []
-	with last_images_shared as last_images:
-		for latex_expr, photo_id in last_images[inline_query.from_user.username]:
+	username = inline_query.from_user.username
+	with last_images_shared as last_images: # Last math images
+		n = len(last_images[username])
+		for latex_expr, photo_id in last_images[username]:
 			results.append(
-				telebot.types.InlineQueryResultCachedPhoto(
+				(["math", str(n)], telebot.types.InlineQueryResultCachedPhoto(
 					id=len(results)+10,
 					title=latex_expr,
 					photo_file_id=photo_id,
 					description="Use previous expression :",
 					caption=latex_expr
-				)
+				))
+			)
+			n -= 1
+	with last_code_shared as last_code: # Last sended code
+		paste_id, lang, photo_id = last_code.get(username, (None, None, None))
+		if paste_id:
+			url = "http://pastebin.com/{}".format(paste_id)
+			results.append(
+				(["code", "paste"], telebot.types.InlineQueryResultCachedPhoto(
+					id=len(results)+10,
+					title=url,
+					photo_file_id=photo_id,
+					description="⌨️ Send pastebin {}".format(paste_id),
+					caption=url
+				))
 			)
 	return results
 
+def filter_recent_items(query, results):
+	return [b for l, b in results if [x for x in l if x.startswith(query)]]
+
 @bot.inline_handler(func=lambda query: True)
 def query_text(inline_query):
+	query = inline_query.query.strip()
 	print("GOT inline query from {} : {}".format(present_user(inline_query.from_user), repr(inline_query.query)))
-	if inline_query.query.strip() and CONF.expose_url:
+
+	items = query.split(" ", 2)
+
+	if query.startswith("send ") and len(items) == 3:
+			bot.answer_inline_query(
+				inline_query.id,
+				[telebot.types.InlineQueryResultCachedPhoto(
+					id=0,
+					title=items[2],
+					photo_file_id=items[1],
+					description=items[2],
+					caption=items[2]
+				)],
+			)
+			return
+	if query.startswith("send_code ") and len(items) == 3:
+			bot.answer_inline_query(
+				inline_query.id,
+				[telebot.types.InlineQueryResultCachedPhoto(
+					id=0,
+					title=items[2],
+					photo_file_id=items[1],
+					description=items[2],
+					caption=items[2]
+				)],
+			)
+			return
+
+	recent_items = filter_recent_items(query, get_inline_query_results_lasts(inline_query))
+	if not recent_items and CONF.expose_url:
+	# if query and CONF.expose_url:
 		bot.answer_inline_query(
 			inline_query.id,
 			get_inline_query_results_generated(inline_query),
@@ -131,14 +206,24 @@ def query_text(inline_query):
 	else:
 		bot.answer_inline_query(
 			inline_query.id,
-			get_inline_query_results_lasts(inline_query),
+			recent_items,
 			cache_time=0,
 			is_personal=True,
 			switch_pm_text=MESSAGES["switch_pm_text"],
 			switch_pm_parameter="latex",
 		)
 
-## Unhandled input
+## Unhandled input, callbacks
+
+@bot.callback_query_handler(func=lambda call: True)
+def  test_callback(call):
+    if call.data == "show_help":
+    	send_help_action(call.message.chat.id)
+    elif call.data == "dont_care":
+    	bot.edit_message_text(
+    		chat_id=call.message.chat.id, message_id=call.message.message_id,
+    		text=call.message.text
+    	)
 
 @bot.message_handler(func=lambda message:message.chat.type == "private")
 def text_handler(message):
@@ -171,9 +256,7 @@ def init_bot():
 	ch.setFormatter(formatter)
 
 def bot_main_loop():
-
 	init_bot()
-	bot_user_infos = bot.get_me()
 	back_thread.start()
 
 	CONF.to_stdout()

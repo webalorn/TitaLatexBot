@@ -9,14 +9,25 @@ DEFAULT_DPI = 600
 LOST = set(["the game", "THE GAME", "game", "42"])
 
 MESSAGES = {
-	"start" : "Hello ! I am Tita-Latex, I am here to help you using latex in telegram. To start, directly type your latex code, or use :\n\n/latex [you code]\nOr if you want more informations : /help\n\n Enjoy !",
+	"start" : "Hello ! I am TitaLatex, I am here to help you using latex in telegram. To start, just type your latex code, or use :\n\n/latex [you code]\nBut I have other wonderful commands ! If you want more information : /help\n\n Enjoy ! ❤️",
 	"latex_start" : "Now, write your equation 😈",
+	"help" : ("So you want to learn how to use me ! ☺️🔧\n\n"
+		"I have some commands you can use in private chat or in groups :\n"
+		"❓ <b>/help </b> will show this message\n"
+		"∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. You can then forward the message, or send it in any chat by typing @{0}\n"
+		"⌨️ <b>/code [pastebin id] [language(optional)]</b> To use this command, you must create a paste on <a href='https://pastebin.com/'>pastebin</a>. Then, you must give me the id or the url of the paste. You can specify the language as a second and optional parameter, but <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>the list is very limited.</a>\n"
+		"\n"
+		"You can also just send some text in our private conversation, and I will try to interpret it as math LaTeX. In any conversation, you can also call me using <b>inline mode</b> : start by typing <b>@{0}</b> in the message field, it will allow you to :\n"\
+		"- Send the last code generated with /code : select the image, or type 'code'\n" \
+		"- Send some of the last LaTeX images you created : select the image, or type 'math', or 1, 2, 3, etc.. for the last images.\n" \
+		"- Generate a new LaTeX image by typing <b>@{0} [your LaTeX code]</b>\n"
+		"\n"
+		"I hope this can help you ! 😃"),
 	"switch_pm_text" : "Write an equation with me 😇",
 	"no_latex_in_cmd" : "It would be nice to send your latex expression with \"/latex [expression]\", or by sending the code directly in the conversation",
 	"invalid_latex_code" : "Ho no, my dear friend... Your latex code \"{}\" is invalid !",
-	"help" : "While you can directly talk to me in latex, you can also use :\n/latex [expression]\nYou can use me as a good servant in any conversion by typing @{}. You can then select one of latest images you have generated, or directly type you code.",
-	"code_cmd_explanation" : "To use this command, you must send exaclty one or two parameters :\n-> The first must be the id of a document on pastebin.com (8 characters).\n-> The second, optional, is the language of the code, or 'text' if this is plain text.",
-	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error)\nYou can check all the supported languages at : https://www.overleaf.com/learn/latex/Code_listing#Supported_languages",
+	"code_cmd_explanation" : "To use this command, you must send exaclty one or two parameters :\n-> The first must be the id of a document on pastebin.com (8 characters). Pastebin url is also valid.\n-> The second, optional, is the language of the code, or 'text' if this is plain text.",
+	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error)\nYou can check all the supported languages <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>here</a>",
 }
 
 ## Bot configuration
@@ -73,10 +84,13 @@ class SharedGlobal:
 
 def save_data():
 	with data_json_shared as old_json:
-		with non_valid_latex_shared as non_valid_latex, last_images_shared as last_images:
+		with non_valid_latex_shared as non_valid_latex, \
+			last_images_shared as last_images, \
+			last_code_shared as last_code:
 			data_dict = {
 				"last_images" : {key:list(val) for key, val in last_images.items()},
 				"non_valid_latex" : list(non_valid_latex),
+				"last_code" : last_code
 			}
 		json_val = json.dumps(data_dict)
 
@@ -100,11 +114,12 @@ def load_data():
 			with last_images_shared as last_images:
 				for key, val in data["last_images"].items():
 					last_images[key] = deque(val)
+		last_code_shared.update(data.get("last_code", {}))
 
 	except FileNotFoundError:
 		pass
 
-## Manupulation of global objects
+## Manipulation of global objects
 
 def add_recent_image_user(username, expression, photo_id):
 	with last_images_shared as last_images:
@@ -118,4 +133,5 @@ CONF = Config("conf.json")
 
 non_valid_latex_shared = SharedGlobal(set())
 last_images_shared = SharedGlobal(defaultdict(deque))
+last_code_shared = SharedGlobal({})
 data_json_shared = SharedGlobal("")

@@ -73,10 +73,18 @@ You must write your configuration in ```conf.json``` in the following format. ``
 
 - Send latex code or use the ```/latex``` command to generate images when talking to the bot
 	- You can then send the image to other users
-- Use ```/latex``` in group chats
+- Use ```/code <id> <language>``` command to generate image and link to a pastebin. The "language" parameter is optional. For example, to generate image from [https://pastebin.com/dXmdL6Sh](https://pastebin.com/dXmdL6Sh), use ```/latex dXmdL6Sh```, or ```/latex dXmdL6Sh python```. See the [supported languages list](https://www.overleaf.com/learn/latex/Code_listing#Supported_languages).
+- Use the commands in group chats
 - Type ```@nameofthebot``` in any chat, and then :
 	- Leave empty and click on an image to send a latex code recently sent to the bot
+	- You can also send the 
 	- Or type a latex expression
+
+<!--
+help - Send help message
+latex - Convert LaTeX code to image
+code - Convert code on pastebin to an image
+-->
 
 
 ## Example
