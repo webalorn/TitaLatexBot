@@ -1,5 +1,5 @@
 from threading import Thread
-import base64, struct, time
+import base64, struct, time, re
 from src.data import CONF, save_data
 
 def present_user(user):
@@ -62,3 +62,12 @@ def hash_dn(dn, salt="42"):
 	# Pack hash (int) into bytes
 	bhash = struct.pack("<Q", hash_)
 	return base64.urlsafe_b64encode(bhash)[:-1].decode("ascii")
+
+## Extracting from string
+
+REGEX_PASTE = re.compile('^ *h?t?t?p?s?:?/?/?(?:pastebin.com/)?(?:raw/)?([0-9a-zA-Z]{8})/? *$', re.IGNORECASE)
+
+def extract_pastebin(text):
+	m = REGEX_PASTE.match(text)
+	if m:
+		return m.group(1)

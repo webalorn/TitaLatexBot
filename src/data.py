@@ -14,21 +14,28 @@ MESSAGES = {
 	"help" : ("So you want to learn how to use me ! ☺️🔧\n\n"
 		"I have some commands you can use in private chat or in groups :\n"
 		"❓ <b>/help </b> will show this message\n"
-		"∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. This will be executed in a <em>math</em> environment. You can then forward the message, or send it in any chat by typing @{0}\n"
+		" ∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. This will be executed in a <em>math</em> environment. You can then forward the message, or send it in any chat by typing @{0}\n"
 		"🔡 <b>/text [LaTeX expression]</b> Use this command to generate an image from a LaTeX code. In contrast to /latex, it will NOT be executed in a math environment. You can add math parts with $math_code$. You can then forward the message, or send it in any chat by typing @{0}\n"
 		"⌨️ <b>/code [pastebin id] [language(optional)]</b> To use this command, you must create a paste on <a href='https://pastebin.com/'>pastebin</a>. Then, you must give me the id or the url of the paste. You can specify the language as a second and optional parameter, but <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>the list is very limited.</a>\n"
+		"⌨️ <b>/about</b> About me, the wonderful Tita. I may be a bit narcissistic.\n"
 		"\n"
-		"You can also just send some text in our private conversation, and I will try to interpret it as math LaTeX. In any conversation, you can also call me using <b>inline mode</b> : start by typing <b>@{0}</b> in the message field, it will allow you to :\n"\
+		"You can also just send some text in our private conversation, and I will try to interpret it as math LaTeX or as a code if it's a pastebin URL.\n"
+		"In any conversation, you can also call me using <b>inline mode</b> : start by typing <b>@{0}</b> in the message field, it will allow you to :\n"\
 		"- Send the last code generated with /code : select the image, or type 'code'\n" \
 		"- Send some of the last LaTeX images you created : select the image, or type 'math', or 1, 2, 3, etc.. for the last images.\n" \
 		"- Generate a new LaTeX image by typing <b>@{0} [your LaTeX code]</b>\n"
 		"\n"
 		"I hope this can help you ! 😃"),
-	"switch_pm_text" : "Write an equation with me 😇",
+	"about" : ("I am tita, a bot 🤖🦾 built to help people with LaTeX when using Telegram.\n"
+		"I was created by <a href='https://t.me/webalorn'>@webalorn</a> (the one you should complain to if I don't work well) using the beautiful <a href='https://www.python.org/'>python</a> language, the <a href='https://github.com/eternnoir/pyTelegramBotAPI'>pyTelegramBotAPI</a> library and <a href='https://www.tug.org/texlive/'>TeX Live</a>\n"
+		"My source code is available on my <a href='https://github.com/webalorn/TitaLatexBot'>github repository</a>."
+		),
+	"switch_pm_text" : "➕ Write an equation with me ! 😇",
 	"no_latex_in_cmd" : "It would be nice to send your latex expression with \"/latex [expression]\", or by sending the code directly in the conversation",
 	"invalid_latex_code" : "Ho no, my dear friend... Your latex code \"{}\" is invalid !",
 	"code_cmd_explanation" : "To use this command, you must send exaclty one or two parameters :\n-> The first must be the id of a document on pastebin.com (8 characters). Pastebin url is also valid.\n-> The second, optional, is the language of the code, or 'text' if this is plain text.",
 	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error)\nYou can check all the supported languages <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>here</a>",
+	"invalid_pastebin_id" : "This pastebin code/id is not valid 😡",
 }
 
 ## Bot configuration

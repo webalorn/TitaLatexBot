@@ -29,8 +29,8 @@ def send_equation(chat_id, text, user, is_text=False):
 		inline_query = " ".join(["send", str(msg.photo[0].file_id), text.strip()])
 		markup = types.InlineKeyboardMarkup(row_width=2)
 		markup.row(
-			types.InlineKeyboardButton("Image", url=filename2url(filename)),
-			types.InlineKeyboardButton("Send", switch_inline_query=inline_query)
+			types.InlineKeyboardButton("🖼️ Image", url=filename2url(filename)),
+			types.InlineKeyboardButton("✉️ Send", switch_inline_query=inline_query)
 		)
 		bot.edit_message_reply_markup(chat_id=chat_id, message_id=msg.message_id, reply_markup=markup)
 	return True
@@ -42,26 +42,78 @@ def handle_expression(text, message, is_text=False):
 	else:
 		bot.reply_to(message, MESSAGES["no_latex_in_cmd"])
 
+def try_command_code(message, fail_silent=False, has_cmd_text=True):
+	params = message.text.split()
+	if not has_cmd_text:
+		params = ["/code"] + params
+	if len(params) != 2 and len(params) != 3:
+		if not fail_silent:
+			bot.send_message(message.chat.id, MESSAGES["code_cmd_explanation"])
+		return False
+	paste_id = extract_pastebin(params[1])
+	if not paste_id:
+		if not fail_silent:
+			bot.send_message(message.chat.id, MESSAGES["invalid_pastebin_id"])
+		return False
+
+	lang = "" if len(params) == 2 else params[2]
+	url = "http://pastebin.com/raw/{}".format(paste_id)
+	url_paste = "http://pastebin.com/{}".format(paste_id)
+
+	filename = None
+	try:
+		filename = code2filename(url, lang)
+	except InvalidRessouce:
+		if not fail_silent:
+			bot.send_message(message.chat.id, MESSAGES["invalid_pastebin_id"])
+		return False
+
+	if filename:
+		with open(filename, 'rb') as img:
+			msg = bot.send_photo(message.chat.id, img, caption=url)
+		with last_code_shared as last_code:
+			last_code[message.from_user.username] = (paste_id, lang, msg.photo[0].file_id)
+
+		inline_query = " ".join(["send_code", str(msg.photo[0].file_id), url_paste])
+		markup = types.InlineKeyboardMarkup(row_width=2)
+		markup.row(
+			types.InlineKeyboardButton("🖥 Image", url=filename2url(filename)),
+			types.InlineKeyboardButton("✉️ Send", switch_inline_query=inline_query)
+		)
+		bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=msg.message_id, reply_markup=markup)
+	else:
+		bot.send_message(message.chat.id, MESSAGES["code_error"], parse_mode="HTML")
+	return True
+
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-	log("/start with {}".format(present_user(message.from_user)))
+	log_message(message)
 	start_content = " ".join(message.text.strip().split()[1:])
 	if start_content == "latex":
 		bot.send_message(message.chat.id, MESSAGES["latex_start"])
 	else:
 		markup = types.InlineKeyboardMarkup(row_width=2)
 		markup.row(
-			types.InlineKeyboardButton("Show commands list", callback_data="show_help"),
-			types.InlineKeyboardButton("I don't care", callback_data="dont_care"),
+			types.InlineKeyboardButton("📜 Show commands list", callback_data="show_help"),
+			types.InlineKeyboardButton("❌ I don't care", callback_data="dont_care"),
 		)
 		bot.send_message(message.chat.id, MESSAGES["start"], reply_markup=markup)
 
 def send_help_action(chat_id):
-	bot.send_message(chat_id, MESSAGES["help"].format(bot_user_infos.username), parse_mode="HTML")
+	bot.send_message(chat_id, MESSAGES["help"].format(bot_user_infos.username), parse_mode="HTML", disable_web_page_preview=True)
 
 @bot.message_handler(commands=['help'])
 def send_help(message):
+	log_message(message)
 	send_help_action(message.chat.id)
+
+def send_about_action(chat_id):
+	bot.send_message(chat_id, MESSAGES["about"].format(bot_user_infos.username), parse_mode="HTML", disable_web_page_preview=True)
+
+@bot.message_handler(commands=['about'])
+def send_help(message):
+	log_message(message)
+	send_about_action(message.chat.id)
 
 @bot.message_handler(commands=['latex', 'text'])
 def send_expression(message):
@@ -73,36 +125,7 @@ def send_expression(message):
 @bot.message_handler(commands=['code'])
 def send_code(message):
 	log_message(message)
-	params = message.text.split()
-	if len(params) != 2 and len(params) != 3:
-		bot.send_message(message.chat.id, MESSAGES["code_cmd_explanation"])
-		return
-	paste_id = params[1][-8:]
-	lang = "" if len(params) == 2 else params[2]
-	url = "http://pastebin.com/raw/{}".format(paste_id)
-	url_paste = "http://pastebin.com/{}".format(paste_id)
-
-	filename = None
-	try:
-		filename = code2filename(url, lang)
-	except InvalidRessouce:
-		bot.send_message(message.chat.id, "This pastebin code/id is not valid 😡")
-
-	if filename:
-		with open(filename, 'rb') as img:
-			msg = bot.send_photo(message.chat.id, img, caption=url)
-		with last_code_shared as last_code:
-			last_code[message.from_user.username] = (paste_id, lang, msg.photo[0].file_id)
-
-		inline_query = " ".join(["send_code", str(msg.photo[0].file_id), url_paste])
-		markup = types.InlineKeyboardMarkup(row_width=2)
-		markup.row(
-			types.InlineKeyboardButton("Image", url=filename2url(filename)),
-			types.InlineKeyboardButton("Send", switch_inline_query=inline_query)
-		)
-		bot.edit_message_reply_markup(chat_id=message.chat.id, message_id=msg.message_id, reply_markup=markup)
-	else:
-		bot.send_message(message.chat.id, MESSAGES["code_error"], parse_mode="HTML")
+	try_command_code(message)
 
 ## Inline mode
 
@@ -234,6 +257,8 @@ def text_handler(message):
 	text = message.text.strip()
 	if text in LOST:
 		bot.send_message(message.chat.id, "How dare you !!??...\nI lost the game 👿")
+	elif try_command_code(message, fail_silent=True, has_cmd_text=False):
+		pass
 	else:
 		handle_expression(text, message)
 
