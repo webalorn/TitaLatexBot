@@ -160,6 +160,19 @@ def code2filename(url, lang):
 			code = response.read().decode("utf-8")
 	except:
 		raise InvalidRessouce
-	expression = LatexExpression(code, args={"lang": lang}, template="code")
+
+	after_text = ""
+	# Remove long lines, cut if too many lines
+	lines = code.splitlines()
+	for i, l in enumerate(lines):
+		lines[i] = "\n".join(l[k:k+MAX_CODE_LINE_SIZE] for k in range(0, len(l), MAX_CODE_LINE_SIZE))
+	lines = "\n".join(lines).splitlines()
+	if len(lines) > MAX_CODE_LINES:
+		cut = len(lines) - MAX_CODE_LINES
+		after_text = "[...] {} more lines".format(cut)
+		lines = lines[:MAX_CODE_LINES]
+	code = "\n".join(lines)
+
+	expression = LatexExpression(code, args={"lang": lang, "after_text":after_text}, template="code")
 
 	return tex2filename(expression)

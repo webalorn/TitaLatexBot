@@ -4,6 +4,8 @@ from threading import Lock
 
 ## Constants
 
+MAX_CODE_LINE_SIZE = 105
+MAX_CODE_LINES = 50
 DEFAULT_RECENTS = 5
 DEFAULT_DPI = 600
 LOST = set(["the game", "THE GAME", "game", "42"])

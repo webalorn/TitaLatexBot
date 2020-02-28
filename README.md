@@ -106,3 +106,5 @@ Current developer : Théophane Vallaeys ([webalorn](https://github.com/webalorn)
 I made this bot from [LaTeX2IMGbot](https://github.com/analca3/LaTeX2IMGbot) by [analca3](https://github.com/analca3). Since there were bugs and many limitations, I created TitaLatex. Most of the code has been rewriten. Most of the code is new.
 
 (And Tita is just the name I give to all my bots)
+
+![Tita is not always kind :'(](ressources/broken_love.png)
