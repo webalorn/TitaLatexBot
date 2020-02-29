@@ -109,8 +109,8 @@ def tex2png_local(filename, expression):
 			"-D", str(CONF.dpi),
 			filename + ".dvi",
 			"-o", filename_png
-		],
-		stdout=null_file, stderr=null_file
+			],
+			stdout=null_file, stderr=null_file
 		)
 
 	png_post_process(filename_png, expand=True)

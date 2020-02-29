@@ -42,8 +42,10 @@ def handle_expression(text, message, is_text=False):
 	else:
 		bot.reply_to(message, MESSAGES["no_latex_in_cmd"])
 
-def try_command_code(message, fail_silent=False, has_cmd_text=True):
-	params = message.text.split()
+def try_command_code(message, fail_silent=False, has_cmd_text=True, command_text=None):
+	if not command_text:
+		command_text = message.text
+	params = command_text.split()
 	if not has_cmd_text:
 		params = ["/code"] + params
 	if len(params) != 2 and len(params) != 3:
@@ -70,7 +72,7 @@ def try_command_code(message, fail_silent=False, has_cmd_text=True):
 
 	if filename:
 		with open(filename, 'rb') as img:
-			msg = bot.send_photo(message.chat.id, img, caption=url)
+			msg = bot.send_photo(message.chat.id, img, caption=url_paste)
 		with last_code_shared as last_code:
 			last_code[message.from_user.username] = (paste_id, lang, msg.photo[0].file_id)
 
@@ -122,10 +124,34 @@ def send_expression(message):
 	text = text_parts[1] if len(text_parts) >= 2 else ""
 	handle_expression(text, message, text_parts[0] == "/text")
 
+## Code and pastes
+
 @bot.message_handler(commands=['code'])
 def send_code(message):
 	log_message(message)
 	try_command_code(message)
+
+def try_paste_to_code(message, paste_id):
+	if not try_command_code(message, has_cmd_text=False, fail_silent=True, command_text=paste_id):
+		markup = types.InlineKeyboardMarkup(row_width=2)
+		markup.row(
+			types.InlineKeyboardButton("🖼 Try again", callback_data="try_again_paste " + paste_id),
+			types.InlineKeyboardButton("❌ Hide", callback_data="dont_care"),
+		)
+		bot.send_message(message.chat.id, MESSAGES["paste_spam"].format(paste_id), reply_markup=markup)
+
+@bot.message_handler(commands=['paste'])
+def send_code(message):
+	parts = message.text.strip().split(' ', 1)
+	if len(parts) < 2:
+		bot.send_message(message.chat.id, MESSAGES['paste_no_node'])
+		return
+	code = parts[1]
+	success, results = create_paste(code, message.from_user)
+	if success:
+		try_paste_to_code(message, results)
+	else:
+		bot.send_message(message.chat.id, "An error occured when trying to upload your code : {}".format(results))
 
 ## Inline mode
 
@@ -242,14 +268,21 @@ def query_text(inline_query):
 ## Unhandled input, callbacks
 
 @bot.callback_query_handler(func=lambda call: True)
-def  test_callback(call):
-    if call.data == "show_help":
-    	send_help_action(call.message.chat.id)
-    elif call.data == "dont_care":
-    	bot.edit_message_text(
-    		chat_id=call.message.chat.id, message_id=call.message.message_id,
-    		text=call.message.text
-    	)
+def callback_handler(call):
+	items = call.data.split(' ', 1)
+	call_cmd = items[0]
+	call_content = items[1] if len(items) > 1 else ""
+
+	if call_cmd == "show_help":
+		send_help_action(call.message.chat.id)
+	elif call_cmd == "dont_care":
+		bot.edit_message_text(
+			chat_id=call.message.chat.id, message_id=call.message.message_id,
+			text=call.message.text
+		)
+	elif call_cmd == "try_again_paste":
+		bot.delete_message(call.message.chat.id, call.message.message_id)
+		try_paste_to_code(call.message, call_content)
 
 @bot.message_handler(func=lambda message:message.chat.type == "private")
 def text_handler(message):
@@ -257,6 +290,9 @@ def text_handler(message):
 	text = message.text.strip()
 	if text in LOST:
 		bot.send_message(message.chat.id, "How dare you !!??...\nI lost the game 👿")
+	elif text.startswith("/"):
+		cmd = text.split()[0]
+		bot.send_message(message.chat.id, MESSAGES["invalid_command"].format(cmd))
 	elif try_command_code(message, fail_silent=True, has_cmd_text=False):
 		pass
 	else:

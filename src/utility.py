@@ -2,6 +2,9 @@ from threading import Thread
 import base64, struct, time, re
 from src.data import CONF, save_data
 
+from urllib.parse import urlencode
+from urllib.request import Request, urlopen
+
 def present_user(user):
 	return "{} (@{})".format(" ".join(
 		[name for name in [user.first_name, user.last_name] if name]),
@@ -71,3 +74,24 @@ def extract_pastebin(text):
 	m = REGEX_PASTE.match(text)
 	if m:
 		return m.group(1)
+
+def create_paste(code, user):
+	if not CONF.pastebin_dev_key:
+		return False, 'No pastebin dev key in bot conf.json'
+
+	url = 'http://pastebin.com/api/api_post.php'
+	data = {
+		'api_dev_key' : CONF.pastebin_dev_key,
+		'api_option' : 'paste',
+		'api_paste_code' : code,
+		'api_paste_expire_date' : '1M',
+		'api_paste_name' : 'Paste by {}'.format(present_user(user))
+	}
+	if CONF.pastebin_user_key:
+		data['api_user_key'] = CONF.pastebin_user_key
+
+	request = Request(url, urlencode(data).encode())
+	result = urlopen(request).read().decode()
+	if result.startswith("Bad API"):
+		return False, result
+	return True, result

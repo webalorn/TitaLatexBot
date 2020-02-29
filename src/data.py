@@ -19,6 +19,7 @@ MESSAGES = {
 		" ∑ <b>/latex [LaTeX expression]</b> Use this command to generate an image from a math LaTeX code. This will be executed in a <em>math</em> environment. You can then forward the message, or send it in any chat by typing @{0}\n"
 		"🔡 <b>/text [LaTeX expression]</b> Use this command to generate an image from a LaTeX code. In contrast to /latex, it will NOT be executed in a math environment. You can add math parts with $math_code$. You can then forward the message, or send it in any chat by typing @{0}\n"
 		"⌨️ <b>/code [pastebin id] [language(optional)]</b> To use this command, you must create a paste on <a href='https://pastebin.com/'>pastebin</a>. Then, you must give me the id or the url of the paste. You can specify the language as a second and optional parameter, but <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>the list is very limited.</a>\n"
+		"📝 <b>/paste [your code !]</b> If you want to create a paste on pastebin and send it with /code, this command allows you to do both ! Send me your code, I will upload it and send you the url and the preview image.\n"
 		"⌨️ <b>/about</b> About me, the wonderful Tita. I may be a bit narcissistic.\n"
 		"\n"
 		"You can also just send some text in our private conversation, and I will try to interpret it as math LaTeX or as a code if it's a pastebin URL.\n"
@@ -29,15 +30,18 @@ MESSAGES = {
 		"\n"
 		"I hope this can help you ! 😃"),
 	"about" : ("I am tita, a bot 🤖🦾 built to help people with LaTeX when using Telegram.\n"
-		"I was created by <a href='https://t.me/webalorn'>@webalorn</a> (the one you should complain to if I don't work well) using the beautiful <a href='https://www.python.org/'>python</a> language, the <a href='https://github.com/eternnoir/pyTelegramBotAPI'>pyTelegramBotAPI</a> library and <a href='https://www.tug.org/texlive/'>TeX Live</a>\n"
-		"My source code is available on my <a href='https://github.com/webalorn/TitaLatexBot'>github repository</a>."
+		"I (the extraordinary and fabulous TitaLatexBot) was created by <a href='https://t.me/webalorn'>@webalorn</a> (the one you should complain to if I don't work well) using the beautiful <a href='https://www.python.org/'>python</a> language, the <a href='https://github.com/eternnoir/pyTelegramBotAPI'>pyTelegramBotAPI</a> library and <a href='https://www.tug.org/texlive/'>TeX Live</a>\n"
+		"My source code is available on my <a href='https://github.com/webalorn/TitaLatexBot'>github repository</a>. I think it is perfect, my creator don't. If you believe him, feel free to improve/fork me."
 		),
+	"invalid_command" : "I am afraid I don't understand the command {} 😔",
 	"switch_pm_text" : "➕ Write an equation with me ! 😇",
 	"no_latex_in_cmd" : "It would be nice to send your latex expression with \"/latex [expression]\", or by sending the code directly in the conversation",
 	"invalid_latex_code" : "Ho no, my dear friend... Your latex code \"{}\" is invalid !",
 	"code_cmd_explanation" : "To use this command, you must send exaclty one or two parameters :\n-> The first must be the id of a document on pastebin.com (8 characters). Pastebin url is also valid.\n-> The second, optional, is the language of the code, or 'text' if this is plain text.",
-	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error)\nYou can check all the supported languages <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>here</a>",
+	"code_error" : "I had an error... 😢\nThe language you have selected must be invalid.\n(Or maybe there is latex in the pastebin, which can cause the error, or characters not supported by LaTeX like emoji)\nYou can check all the supported languages <a href='https://www.overleaf.com/learn/latex/Code_listing#Supported_languages'>here</a>",
 	"invalid_pastebin_id" : "This pastebin code/id is not valid 😡",
+	"paste_no_node" : "How I am supposed to create a paste if you don't give me the source code ? 🤔",
+	"paste_spam" : "Your code has been pasted at {0}. Unfortunately, I failed to create a preview image. It maybe the case if the paste triggered the pastebin SPAM filter. In this case, go to {0} and solve the captcha. Then, just press the button below.",
 }
 
 ## Bot configuration
@@ -52,6 +56,9 @@ class Config:
 			self.conf = json.load(json_conf_file)
 
 		self.token = self.conf["token"] # Required
+		self.pastebin_dev_key = self.conf.get("pastebin_dev_key", None)
+		self.pastebin_user_key = self.conf.get("pastebin_user_key", None)
+
 		self.use_local_latex = self.conf["use_local_latex"] # Required
 		self.nb_recent_items = self.conf.get("nb_recent_items", DEFAULT_RECENTS)
 		self.dpi = self.conf.get("latex_dpi", DEFAULT_DPI)

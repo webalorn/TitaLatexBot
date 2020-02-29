@@ -79,6 +79,7 @@ A more detailed help for all commands is displayed by the ```/help``` command.
 	- You can then send the image to other users
 - ```/text``` works like ```/latex```, but without starting in a math environment.
 - Use ```/code <id> <language>``` command to generate image and link to a pastebin. The "language" parameter is optional. For example, to generate image from [https://pastebin.com/dXmdL6Sh](https://pastebin.com/dXmdL6Sh), use ```/latex dXmdL6Sh```, or ```/latex dXmdL6Sh python```. See the [supported languages list](https://www.overleaf.com/learn/latex/Code_listing#Supported_languages).
+- You can create pastes on pastebin directly from the bot with ```/paste your_code```. It will return the same output as ```/code```.
 - Use the commands in group chats
 - Type ```@nameofthebot``` in any chat, and then :
 	- Leave empty and click on an image to send a latex code recently sent to the bot
@@ -90,6 +91,7 @@ help - Send help message
 latex - Convert LaTeX math code to image
 text - Convert LaTeX code to image
 code - Convert code on pastebin to an image
+paste - Upload code on pastebin, return link and image
 -->
 
 
